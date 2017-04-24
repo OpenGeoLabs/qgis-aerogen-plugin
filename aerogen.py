@@ -21,7 +21,7 @@
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtGui import QAction, QIcon, QToolButton
 # Initialize Qt resources from file resources.py
 import resources
 
@@ -64,9 +64,9 @@ class AeroGen:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&AeroGen')
-        # TODO: We are going to let the user set this up in a future iteration
-        self.toolbar = self.iface.addToolBar(u'AeroGen')
-        self.toolbar.setObjectName(u'AeroGen')
+
+        # add plugin icon into plugin toolbar
+        self.toolButton = QToolButton()
 
         #print "** INITIALIZING AeroGen"
 
@@ -152,7 +152,8 @@ class AeroGen:
             action.setWhatsThis(whats_this)
 
         if add_to_toolbar:
-            self.toolbar.addAction(action)
+            self.toolButton.setDefaultAction(action)
+            self.iface.addToolBarWidget(self.toolButton)
 
         if add_to_menu:
             self.iface.addPluginToMenu(
