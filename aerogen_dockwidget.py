@@ -26,6 +26,11 @@ import os
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QSettings
 
+from qgis.gui import QgsMessageBar
+from qgis.utils import iface
+
+from reader import AreaReader, AreaReaderError
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'aerogen_dockwidget_base.ui'))
 
@@ -73,5 +78,11 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._settings.setValue(sender, os.path.dirname(filePath))
 
     def OnGenerate(self):
-        pass
-    
+        try:
+            ar = AreaReader(self.textInput.toPlainText())
+            print ar.area_polygon()
+        except AreaReaderError as e:
+            iface.messageBar().pushMessage("Error",
+                                           "{}".format(e),
+                                           level=QgsMessageBar.CRITICAL
+            )
