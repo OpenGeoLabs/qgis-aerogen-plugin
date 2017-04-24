@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/AeroGen" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
