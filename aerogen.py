@@ -204,8 +204,6 @@ class AeroGen:
                 self.tr(u'&AeroGen'),
                 action)
             self.iface.removeToolBarIcon(action)
-        # remove the toolbar
-        del self.toolbar
 
     #--------------------------------------------------------------------------
 

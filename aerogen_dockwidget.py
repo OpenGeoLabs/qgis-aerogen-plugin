@@ -24,7 +24,7 @@
 import os
 
 from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, SIGNAL, QSettings
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'aerogen_dockwidget_base.ui'))
@@ -44,7 +44,34 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
+        # settings
+        self._settings = QSettings()
+
+        self.connect(self.browseButton,
+                     SIGNAL("clicked()"), self.OnBrowse)
+        self.connect(self.generateButton,
+                     SIGNAL("clicked()"), self.OnGenerate)
+        
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
 
+    def OnBrowse(self):
+        sender = 'AeroGen-{}-lastUserFilePath'.format(self.sender().objectName())
+        lastPath = self._settings.value(sender, '')
+
+        filePath = QtGui.QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
+                                                     lastPath, self.tr("XYZ file (*.xyz)"))
+        if not filePath:
+            # action canceled
+            return
+
+        filePath = os.path.normpath(filePath)
+        self.textInput.setText(filePath)
+        
+        # remember directory path
+        self._settings.setValue(sender, os.path.dirname(filePath))
+
+    def OnGenerate(self):
+        pass
+    
