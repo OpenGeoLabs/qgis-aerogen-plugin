@@ -27,9 +27,12 @@ from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QSettings
 
 from qgis.gui import QgsMessageBar
+from qgis.core import QgsMapLayerRegistry
 from qgis.utils import iface
 
-from reader import AreaReader, AreaReaderError
+from reader import AerogenReader, AerogenReaderError
+from exceptions import AerogenError
+from aerogen_layer import AerogenLayer
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'aerogen_dockwidget_base.ui'))
@@ -63,6 +66,7 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
     def OnBrowse(self):
         sender = 'AeroGen-{}-lastUserFilePath'.format(self.sender().objectName())
+        # load lastly used directory path
         lastPath = self._settings.value(sender, '')
 
         filePath = QtGui.QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
@@ -78,10 +82,18 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._settings.setValue(sender, os.path.dirname(filePath))
 
     def OnGenerate(self):
+        input_file = self.textInput.toPlainText()
+        input_basename = os.path.splitext(os.path.basename(input_file))[0]
+        output_dir = '/tmp'
         try:
-            ar = AreaReader(self.textInput.toPlainText())
-            print ar.area_polygon()
-        except AreaReaderError as e:
+            # read input file
+            ar = AerogenReader(input_file)
+            # create a new Shapefile layer from area polygon
+            output_file = os.path.join(output_dir, input_basename + '_area.shp')
+            polygon_layer = AerogenLayer(output_file, ar.area())
+            # add map layer to the canvas
+            QgsMapLayerRegistry.instance().addMapLayer(polygon_layer)
+        except AerogenReaderError as e:
             iface.messageBar().pushMessage("Error",
                                            "{}".format(e),
                                            level=QgsMessageBar.CRITICAL

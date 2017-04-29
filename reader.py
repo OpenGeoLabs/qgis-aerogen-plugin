@@ -1,9 +1,9 @@
 from qgis.core import QgsGeometry, QgsPoint
 
-class AreaReaderError(Exception):
+class AerogenReaderError(Exception):
     pass
 
-class AreaReader(object):
+class AerogenReader(object):
     def __init__(self, filename):
         polygon_points = []
         try:
@@ -23,7 +23,7 @@ class AreaReader(object):
             # close polygon
             polygon_points.append(polygon_points[0])
 
-        self._area_polygon = QgsGeometry.fromPolygon([polygon_points])
+        self._area_geometry = [QgsGeometry.fromPolygon([polygon_points])]
 
-    def area_polygon(self):
-        return self._area_polygon
+    def area(self):
+        return self._area_geometry
