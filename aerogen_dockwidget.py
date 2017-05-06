@@ -27,10 +27,10 @@ from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QSettings
 
 from qgis.gui import QgsMessageBar
-from qgis.core import QgsMapLayerRegistry
+from qgis.core import QgsMapLayerRegistry, QgsCoordinateReferenceSystem
 from qgis.utils import iface
 
-from reader import AerogenReader, AerogenReaderError
+from reader import AerogenReader, AerogenReaderError, AerogenReaderCRS
 from exceptions import AerogenError
 from aerogen_layer import AerogenLayer
 
@@ -55,10 +55,19 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # settings
         self._settings = QSettings()
 
+        # reader
+        self._ar = None
+        self._rsCrs = None
+
         self.connect(self.browseButton,
                      SIGNAL("clicked()"), self.OnBrowse)
         self.connect(self.generateButton,
                      SIGNAL("clicked()"), self.OnGenerate)
+
+        # disable some widgets
+        self.crsButton.setEnabled(False)
+        self.outputButton.setEnabled(False)
+        self.generateButton.setEnabled(False)
         
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -81,18 +90,55 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # remember directory path
         self._settings.setValue(sender, os.path.dirname(filePath))
 
-    def OnGenerate(self):
-        input_file = self.textInput.toPlainText()
-        input_basename = os.path.splitext(os.path.basename(input_file))[0]
-        output_dir = '/tmp'
+        # read input file
         try:
-            # read input file
-            ar = AerogenReader(input_file)
+            self._ar = AerogenReader(filePath)
+            crs = self._ar.crs()
+            self.crsButton.setEnabled(True)
+            self.outputButton.setEnabled(True)
+            self.generateButton.setEnabled(True)
+        except AerogenReaderError as e:
+            iface.messageBar().pushMessage(
+                "Error",
+                "{}".format(e),
+                level=QgsMessageBar.CRITICAL
+            )
+            return
+        except AerogenReaderCRS as e:
+            iface.messageBar().pushMessage(
+                "Info",
+                self.tr("{}. You need to define CRS manually.").format(e),
+                level=QgsMessageBar.INFO
+            )
+            self.crsButton.setEnabled(True)
+            return
+
+        # autodetect CRS by EPSG code
+        self._rsCrs = QgsCoordinateReferenceSystem(crs,
+                                                   QgsCoordinateReferenceSystem.EpsgCrsId)
+        self.crsLabel.setText(self._rsCrs.description())
+
+        # set default output path
+        self.textOutput.setText(os.path.dirname(filePath))
+
+    def OnGenerate(self):
+        if not self._ar:
+            return
+
+        output_dir = self.textOutput.toPlainText()
+        try:
             # create a new Shapefile layer from area polygon
-            output_file = os.path.join(output_dir, input_basename + '_area.shp')
-            polygon_layer = AerogenLayer(output_file, ar.area())
+            output_file = os.path.join(output_dir, self._ar.basename() + '_area.shp')
+            polygon_layer = AerogenLayer(output_file, self._ar.area(), self._rsCrs)
             # add map layer to the canvas
             QgsMapLayerRegistry.instance().addMapLayer(polygon_layer)
+
+            # create a new Shapefile layer from survey line
+            output_file = os.path.join(output_dir, self._ar.basename() + '_sl.shp')
+            sl_layer = AerogenLayer(output_file, self._ar.sl(), self._rsCrs)
+            # add map layer to the canvas
+            QgsMapLayerRegistry.instance().addMapLayer(sl_layer)
+
         except AerogenReaderError as e:
             iface.messageBar().pushMessage("Error",
                                            "{}".format(e),
