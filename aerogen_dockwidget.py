@@ -128,19 +128,28 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         output_dir = self.textOutput.toPlainText()
         try:
             # create a new Shapefile layer from area polygon
-            output_file = os.path.join(output_dir, self._ar.basename() + '_area.shp')
+            output_file = os.path.join(output_dir, self._ar.basename() + '_polygon.shp')
             polygon_layer = AerogenLayer(output_file, self._ar.area(), self._rsCrs)
+            polygon_layer.loadNamedStyle(self.stylePath('polygon'))
             # add map layer to the canvas
             QgsMapLayerRegistry.instance().addMapLayer(polygon_layer)
 
             # create a new Shapefile layer from survey line
             output_file = os.path.join(output_dir, self._ar.basename() + '_sl.shp')
             sl_layer = AerogenLayer(output_file, self._ar.sl(), self._rsCrs)
+            sl_layer.loadNamedStyle(self.stylePath('survey_lines'))
             # add map layer to the canvas
             QgsMapLayerRegistry.instance().addMapLayer(sl_layer)
 
-        except AerogenReaderError as e:
+        except (AerogenReaderError, AerogenError) as e:
             iface.messageBar().pushMessage("Error",
                                            "{}".format(e),
                                            level=QgsMessageBar.CRITICAL
             )
+
+    def stylePath(self, name):
+        stylePath = os.path.join(os.path.dirname(__file__), "style", name + '.qml')
+        if not os.path.isfile(stylePath):
+            raise AerogenError(self.tr("Style '{}' not found").format(styleName))
+
+        return stylePath

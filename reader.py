@@ -62,10 +62,11 @@ class AerogenReader(object):
         return [QgsGeometry.fromPolygon([self._polygon_points])]
 
     def sl(self):
-        if len(self._line_points) < 2:
+        if len(self._line_points) != 4:
             raise AerogenReaderError("Unable to generate line geometry")
 
-        return [QgsGeometry.fromPolyline(self._line_points)]
+        return [QgsGeometry.fromPolyline(self._line_points[0:2]),
+                QgsGeometry.fromPolyline(self._line_points[2:4])]
 
     def tl(self):
         pass
