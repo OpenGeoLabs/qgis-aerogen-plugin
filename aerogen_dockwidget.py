@@ -60,9 +60,11 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._rsCrs = None
 
         self.connect(self.browseButton,
-                     SIGNAL("clicked()"), self.OnBrowse)
+                     SIGNAL("clicked()"), self.OnBrowseInput)
         self.connect(self.generateButton,
                      SIGNAL("clicked()"), self.OnGenerate)
+        self.connect(self.outputButton,
+                     SIGNAL("clicked()"), self.OnBrowseOutput)
 
         # disable some widgets
         self.crsButton.setEnabled(False)
@@ -73,7 +75,7 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self.closingPlugin.emit()
         event.accept()
 
-    def OnBrowse(self):
+    def OnBrowseInput(self):
         sender = 'AeroGen-{}-lastUserFilePath'.format(self.sender().objectName())
         # load lastly used directory path
         lastPath = self._settings.value(sender, '')
@@ -146,6 +148,22 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
                                            "{}".format(e),
                                            level=QgsMessageBar.CRITICAL
             )
+
+    def OnBrowseOutput(self):
+        sender = 'AeroGen-{}-lastUserOutputFilePath'.format(self.sender().objectName())
+        # load lastly used directory path
+        lastPath = self._settings.value(sender, self.textInput.toPlainText())
+
+        filePath = QtGui.QFileDialog.getExistingDirectory(self, self.tr('Choose Directory'), lastPath)
+        if not filePath:
+            # action canceled
+            return
+
+        filePath = os.path.normpath(filePath)
+        self.textOutput.setText(filePath)
+
+        # remember directory path
+        self._settings.setValue(sender, os.path.dirname(filePath))
 
     def stylePath(self, name):
         stylePath = os.path.join(os.path.dirname(__file__), "style", name + '.qml')
