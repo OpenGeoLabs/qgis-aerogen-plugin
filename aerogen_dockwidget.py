@@ -129,19 +129,15 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
 
         output_dir = self.textOutput.toPlainText()
         try:
-            # create a new Shapefile layer from area polygon
-            output_file = os.path.join(output_dir, self._ar.basename() + '_polygon.shp')
-            polygon_layer = AerogenLayer(output_file, self._ar.area(), self._rsCrs)
-            polygon_layer.loadNamedStyle(self.stylePath('polygon'))
-            # add map layer to the canvas
-            QgsMapLayerRegistry.instance().addMapLayer(polygon_layer)
-
-            # create a new Shapefile layer from survey line
-            output_file = os.path.join(output_dir, self._ar.basename() + '_sl.shp')
-            sl_layer = AerogenLayer(output_file, self._ar.sl(), self._rsCrs)
-            sl_layer.loadNamedStyle(self.stylePath('survey_lines'))
-            # add map layer to the canvas
-            QgsMapLayerRegistry.instance().addMapLayer(sl_layer)
+            for name, fn in (('polygon', self._ar.area),
+                             ('survey_lines', self._ar.sl),
+                             ('tie_lines', self._ar.tl)):
+                # create a new Shapefile layer
+                output_file = os.path.join(output_dir, self._ar.basename() + '_{}.shp'.format(name))
+                layer = AerogenLayer(output_file, fn(), self._rsCrs)
+                layer.loadNamedStyle(self.stylePath(name))
+                # add map layer to the canvas
+                QgsMapLayerRegistry.instance().addMapLayer(layer)
 
         except (AerogenReaderError, AerogenError) as e:
             iface.messageBar().pushMessage("Error",
