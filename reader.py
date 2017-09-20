@@ -11,8 +11,14 @@ class AerogenReaderCRS(Exception):
 
 class AerogenReader(object):
     def __init__(self, filename):
-        def line_value(line):
-            return line.split(';', 1)[0]
+        def line_value(line, cast_fn=None):
+            value = line.split(';', 1)[0]
+            if cast_fn:
+                if ',' in value:
+                    value = value.replace(',', '.')
+                value = cast_fn(value)
+
+            return value
 
         self._basename = os.path.splitext(os.path.basename(filename))[0]
 
@@ -28,17 +34,17 @@ class AerogenReader(object):
                     if 'L1' in line:
                         self._crs = line_value(line)
                     if line.endswith('CM'):
-                        self._cm = int(line_value(line))
+                        self._cm = line_value(line, cast_fn=int)
                     if line.endswith('Lon'):
-                        self._ns = float(line_value(line)) > 0
+                        self._ns = line_value(line, cast_fn=float) > 0
                     if line.endswith('HSL'):
-                        self._hsl = int(line_value(line)) * (math.pi / 180) # rad
+                        self._hsl = line_value(line, cast_fn=int) * (math.pi / 180) # rad
                     if line.endswith('spacing SL'):
-                        self._ssl = float(line_value(line))
+                        self._ssl = line_value(line, cast_fn=float)
                     if line.endswith('HTL'):
-                        self._htl = int(line_value(line)) * (math.pi / 180) # rad
+                        self._htl = line_value(line, cast_fn=int) * (math.pi / 180) # rad
                     if line.endswith('spacing TL'):
-                        self._stl = float(line_value(line))
+                        self._stl = line_value(line, cast_fn=float)
 
                     # read coordinates
                     if line.startswith('c;'):    # polygon definition
@@ -137,6 +143,11 @@ class AerogenReader(object):
         return lines
 
     def generate_lines(self, sl=True):
+        if not self._line_points:
+            # lines not define, try to specify them from polygon vertices
+            for pnt in self._polygon_points[:-1]:
+                self._line_points.append(pnt)
+
         if len(self._line_points) != 4:
             raise AerogenReaderError("Unable to generate line geometry")
 
