@@ -1,0 +1,30 @@
+UTM;	L1 coordinate system "UTM" or "UPS" or "LAM"
+m;	L2 lat/lon units: "deg"=degree or "m"=meters
+metric;	L3 for speed and distance "metric" [m, km, km/h], "US" [ft,nm,knot]
+m;	L4 for altitude "m" meters, "ft" feet
+PEI;	L5 EQUIPMENT OWNER NAME
+LG;	L6 CLIENT NAME
+49.0049; Lat
+15.8260; Lon
+15; CM
+0; dsx
+0; dsy
+0; dsz
+577567.99; xSL
+5438880.02; ySL
+139; HSL
+2000.00; spacing SL
+577567.99; xTL
+5438880.02; yTL
+48; HTL
+2000.00; spacing TL
+2000; offset SL
+20000; offset TL
+;
+c;577567.99;  5438880.02;  c1
+c;598305.01;  5457441.01;  c2
+c;609696.01;  5445792.01;  c3
+c;584384.01;  5430977.01;  c4
+l li1; 577567.99;  5438880.02;  598305.01;  5457441.01;  100;  l1
+l li2; 609696.01;  5445792.01;  584384.01;  5430977.01;  100;  l2
+ver; PEIConvert Version 5.5.2.3 // xyz for airborne survey
