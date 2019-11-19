@@ -23,22 +23,23 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSignal, SIGNAL, QSettings
+from qgis.PyQt import QtGui, uic
+from qgis.PyQt.QtCore import pyqtSignal, QSettings
+from qgis.PyQt.QtWidgets import QDockWidget, QFileDialog
 
 from qgis.gui import QgsMessageBar
-from qgis.core import QgsMapLayerRegistry, QgsCoordinateReferenceSystem
+from qgis.core import QgsProject, QgsCoordinateReferenceSystem
 from qgis.utils import iface
 
-from reader import AerogenReader, AerogenReaderError, AerogenReaderCRS
-from exceptions import AerogenError
-from aerogen_layer import AerogenLayer
+from .reader import AerogenReader, AerogenReaderError, AerogenReaderCRS
+from .exceptions import AerogenError
+from .aerogen_layer import AerogenLayer
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'aerogen_dockwidget_base.ui'))
 
 
-class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
+class AeroGenDockWidget(QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
 
@@ -59,12 +60,9 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         self._ar = None
         self._rsCrs = None
 
-        self.connect(self.browseButton,
-                     SIGNAL("clicked()"), self.OnBrowseInput)
-        self.connect(self.generateButton,
-                     SIGNAL("clicked()"), self.OnGenerate)
-        self.connect(self.outputButton,
-                     SIGNAL("clicked()"), self.OnBrowseOutput)
+        self.browseButton.clicked.connect(self.OnBrowseInput)
+        self.generateButton.clicked.connect(self.OnGenerate)
+        self.outputButton.clicked.connect(self.OnBrowseOutput)
 
         # disable some widgets
         self.crsButton.setEnabled(False)
@@ -80,13 +78,13 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
         # load lastly used directory path
         lastPath = self._settings.value(sender, '')
 
-        filePath = QtGui.QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
+        filePath = QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
                                                      lastPath, self.tr("XYZ file (*.xyz)"))
         if not filePath:
             # action canceled
             return
 
-        filePath = os.path.normpath(filePath)
+        filePath = os.path.normpath(filePath[0])
         self.textInput.setText(filePath)
         
         # remember directory path
@@ -137,7 +135,7 @@ class AeroGenDockWidget(QtGui.QDockWidget, FORM_CLASS):
                 layer = AerogenLayer(output_file, fn(), self._rsCrs)
                 layer.loadNamedStyle(self.stylePath(name))
                 # add map layer to the canvas
-                QgsMapLayerRegistry.instance().addMapLayer(layer)
+                QgsProject.instance().addMapLayer(layer)
 
         except (AerogenReaderError, AerogenError) as e:
             iface.messageBar().pushMessage("Error",

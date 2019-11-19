@@ -20,13 +20,14 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon, QToolButton
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QToolButton
 # Initialize Qt resources from file resources.py
-import resources
+from . import resources
 
 # Import the code for the DockWidget
-from aerogen_dockwidget import AeroGenDockWidget
+from .aerogen_dockwidget import AeroGenDockWidget
 import os.path
 
 
@@ -63,7 +64,7 @@ class AeroGen:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&AeroGen')
+        self.menu = self.tr('&AeroGen')
 
         # add plugin icon into plugin toolbar
         self.toolButton = QToolButton()
@@ -171,7 +172,7 @@ class AeroGen:
         icon_path = ':/plugins/AeroGen/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'AeroGen'),
+            text=self.tr('AeroGen'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -201,7 +202,7 @@ class AeroGen:
 
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&AeroGen'),
+                self.tr('&AeroGen'),
                 action)
             self.iface.removeToolBarIcon(action)
 

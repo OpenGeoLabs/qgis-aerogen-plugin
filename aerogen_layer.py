@@ -1,7 +1,7 @@
 import os
 
 from qgis.core import QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsFields
-from exceptions import AerogenError
+from .exceptions import AerogenError
 
 class AerogenLayer(QgsVectorLayer):
     def __init__(self, filename, geometries, crs=None):

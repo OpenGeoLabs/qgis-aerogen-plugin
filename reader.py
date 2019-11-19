@@ -1,7 +1,7 @@
 import os
 import math
 
-from qgis.core import QgsGeometry, QgsPoint
+from qgis.core import QgsGeometry, QgsPointXY
 
 class AerogenReaderError(Exception):
     pass
@@ -65,7 +65,7 @@ class AerogenReader(object):
             raise AerogenReaderError(e)
 
     def _build_point(self, x, y):
-        return QgsPoint(
+        return QgsPointXY(
             float(x.strip()), float(y.strip())
         )
 
@@ -76,7 +76,7 @@ class AerogenReader(object):
         # close polygon
         self._polygon_points.append(self._polygon_points[0])
 
-        return [QgsGeometry.fromPolygon([self._polygon_points])]
+        return [QgsGeometry.fromPolygonXY([self._polygon_points])]
 
     def sl(self):
         return self.generate_lines()
@@ -85,7 +85,7 @@ class AerogenReader(object):
         return self.generate_lines(False)
 
     def _next_line(self, end_line=None):
-        if 'dd' not in self._st_line_data.keys():
+        if 'dd' not in list(self._st_line_data.keys()):
             self._st_line_data['dd'] = self._ssl
             self._st_line_data['d'] = []
             self._st_line_data['alpha'] = []
@@ -115,9 +115,9 @@ class AerogenReader(object):
             dy.append(dd[idx] * math.sin(self._st_line_data['alpha'][idx]))
         self._st_line_data['dd'] += self._ssl
 
-        line = QgsGeometry.fromPolyline(
-            [QgsPoint(self._st_line_data['points'][3][0] + dx[0], self._st_line_data['points'][3][1] + dy[0]),
-             QgsPoint(self._st_line_data['points'][2][0] + dx[1], self._st_line_data['points'][2][1] + dy[1])]
+        line = QgsGeometry.fromPolylineXY(
+            [QgsPointXY(self._st_line_data['points'][3][0] + dx[0], self._st_line_data['points'][3][1] + dy[0]),
+             QgsPointXY(self._st_line_data['points'][2][0] + dx[1], self._st_line_data['points'][2][1] + dy[1])]
         )
 
         if dd[0] < 0 or dd[1] < 0:
@@ -125,9 +125,9 @@ class AerogenReader(object):
                 return None
 
             intersection  = line.intersection(end_line)
-            line = QgsGeometry.fromPolyline(
+            line = QgsGeometry.fromPolylineXY(
                 [intersection.asPoint(),
-                 QgsPoint(self._st_line_data['points'][2][0] + dx[1], self._st_line_data['points'][2][1] + dy[1])]
+                 QgsPointXY(self._st_line_data['points'][2][0] + dx[1], self._st_line_data['points'][2][1] + dy[1])]
             )
 
         return line
@@ -196,24 +196,24 @@ class AerogenReader(object):
         if sl:
             self._st_line_data = {
                 'points' : [self._line_points[0],
-                            QgsPoint(self._line_points[0][0] + dx, self._line_points[0][1] + dy),
+                            QgsPointXY(self._line_points[0][0] + dx, self._line_points[0][1] + dy),
                             self._line_points[2],
                             self._line_points[3]
                 ],
-                'endline' : QgsGeometry.fromPolyline([self._line_points[2], self._line_points[3]])
+                'endline' : QgsGeometry.fromPolylineXY([self._line_points[2], self._line_points[3]])
             }
         else:
             self._st_line_data = {
                 'points' : [self._line_points[0],
-                            QgsPoint(self._line_points[0][0] - dx, self._line_points[0][1] - dy),
+                            QgsPointXY(self._line_points[0][0] - dx, self._line_points[0][1] - dy),
                             self._line_points[2],
                             self._line_points[1],
                 ],
-                'endline' : QgsGeometry.fromPolyline([self._line_points[1], self._line_points[2]])
+                'endline' : QgsGeometry.fromPolylineXY([self._line_points[1], self._line_points[2]])
             }
 
         lines = self._generate_next_lines(self._st_line_data['endline'])
-        lines.insert(0, QgsGeometry.fromPolyline([self._st_line_data['points'][0], self._st_line_data['points'][1]]))
+        lines.insert(0, QgsGeometry.fromPolylineXY([self._st_line_data['points'][0], self._st_line_data['points'][1]]))
 
         return lines
 

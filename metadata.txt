@@ -8,7 +8,7 @@
 
 [general]
 name=AeroGen
-qgisMinimumVersion=2.14
+qgisMinimumVersion=3.4
 description=AeroGen Plugin
 version=0.1
 author=CTU GeoForAll Lab
