@@ -136,6 +136,9 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                 layer.loadNamedStyle(self.stylePath(name))
                 # add map layer to the canvas
                 QgsProject.instance().addMapLayer(layer)
+                if self.checkBoxGpx.isChecked():
+                    #TODO export into GPX
+                    print("GPX")
 
         except (AerogenReaderError, AerogenError) as e:
             iface.messageBar().pushMessage("Error",
