@@ -142,7 +142,7 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                         output_file_gpx = os.path.join(output_dir, self._ar.basename() + '_{}.gpx'.format(name))
                         QgsVectorFileWriter.writeAsVectorFormat(layer = layer,
                                                                 fileName = output_file_gpx,
-                                                                driverName = "GPX",
+                                                                driverName = "GPKG",
                                                                 fileEncoding = "UTF-8",
                                                                 destCRS = QgsCoordinateReferenceSystem(4326),
                                                                 layerOptions = ["FORCE_GPX_TRACK = YES"],
