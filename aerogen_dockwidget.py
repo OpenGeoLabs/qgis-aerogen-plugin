@@ -28,7 +28,7 @@ from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.PyQt.QtWidgets import QDockWidget, QFileDialog
 
 from qgis.gui import QgsMessageBar
-from qgis.core import QgsProject, QgsCoordinateReferenceSystem
+from qgis.core import QgsProject, QgsCoordinateReferenceSystem, QgsVectorFileWriter, QgsWkbTypes
 from qgis.utils import iface
 
 from .reader import AerogenReader, AerogenReaderError, AerogenReaderCRS
@@ -137,9 +137,17 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                 # add map layer to the canvas
                 QgsProject.instance().addMapLayer(layer)
                 if self.checkBoxGpx.isChecked():
-                    #TODO export into GPX
-                    print("GPX")
-
+                    if layer.geometryType() == QgsWkbTypes.LineGeometry:
+                        # generate gpx output also for tie and survey lines
+                        output_file_gpx = os.path.join(output_dir, self._ar.basename() + '_{}.gpx'.format(name))
+                        QgsVectorFileWriter.writeAsVectorFormat(layer = layer,
+                                                                fileName = output_file_gpx,
+                                                                driverName = "GPX",
+                                                                fileEncoding = "UTF-8",
+                                                                destCRS = QgsCoordinateReferenceSystem(4326),
+                                                                layerOptions = ["FORCE_GPX_TRACK = YES"],
+                                                                skipAttributeCreation = True
+                        )
         except (AerogenReaderError, AerogenError) as e:
             iface.messageBar().pushMessage("Error",
                                            "{}".format(e),
