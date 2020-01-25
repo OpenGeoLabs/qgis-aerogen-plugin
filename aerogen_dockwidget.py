@@ -59,13 +59,14 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
         # reader
         self._ar = None
         self._rsCrs = None
+        self._destCrs = None
 
         self.browseButton.clicked.connect(self.OnBrowseInput)
         self.generateButton.clicked.connect(self.OnGenerate)
         self.outputButton.clicked.connect(self.OnBrowseOutput)
 
         # disable some widgets
-        self.crsButton.setEnabled(False)
+        self.crsButton.setVisible(False)
         self.outputButton.setEnabled(False)
         self.generateButton.setEnabled(False)
         
@@ -78,23 +79,35 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
         # load lastly used directory path
         lastPath = self._settings.value(sender, '')
 
-        filePath = QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
-                                                     lastPath, self.tr("XYZ file (*.xyz)"))
-        if not filePath:
+        # filePath = QFileDialog.getOpenFileName(self, self.tr("Load XYZ file"),
+        #                                              lastPath, self.tr("XYZ file (*.xyz)"))
+
+
+        directoryPath = QFileDialog.getExistingDirectory(self, self.tr("Directory with XYZ files"),
+                                                     lastPath)
+
+        if not directoryPath:
             # action canceled
             return
 
-        filePath = os.path.normpath(filePath[0])
+        directoryPath = os.path.normpath(directoryPath)
+        filePath = os.path.join(directoryPath, self._getMainXyzFile(directoryPath))
         self.textInput.setText(filePath)
         
         # remember directory path
         self._settings.setValue(sender, os.path.dirname(filePath))
 
+        # set 4326 crs for output files
+        self._destCrs = QgsCoordinateReferenceSystem(4326,
+                                                     QgsCoordinateReferenceSystem.EpsgCrsId)
+
+        # set default output path
+        self.textOutput.setText(directoryPath)
+
         # read input file
         try:
             self._ar = AerogenReader(filePath)
             crs = self._ar.crs()
-            self.crsButton.setEnabled(True)
             self.outputButton.setEnabled(True)
             self.generateButton.setEnabled(True)
         except AerogenReaderError as e:
@@ -110,6 +123,7 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                 self.tr("{}. You need to define CRS manually.").format(e),
                 level=QgsMessageBar.INFO
             )
+            self.crsButton.setVisible(True)
             self.crsButton.setEnabled(True)
             return
 
@@ -117,9 +131,6 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
         self._rsCrs = QgsCoordinateReferenceSystem(crs,
                                                    QgsCoordinateReferenceSystem.EpsgCrsId)
         self.crsLabel.setText(self._rsCrs.description())
-
-        # set default output path
-        self.textOutput.setText(os.path.dirname(filePath))
 
     def OnGenerate(self):
         if not self._ar:
@@ -132,7 +143,10 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                              ('tie_lines', self._ar.tl)):
                 # create a new Shapefile layer
                 output_file = os.path.join(output_dir, self._ar.basename() + '_{}.shp'.format(name))
-                layer = AerogenLayer(output_file, fn(), self._rsCrs)
+                if name == 'polygon':
+                    layer = AerogenLayer(output_file, fn(), self._rsCrs)
+                else:
+                    layer = AerogenLayer(output_file, fn(), self._destCrs)
                 layer.loadNamedStyle(self.stylePath(name))
                 # add map layer to the canvas
                 QgsProject.instance().addMapLayer(layer)
@@ -176,3 +190,17 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
             raise AerogenError(self.tr("Style '{}' not found").format(styleName))
 
         return stylePath
+
+    def _getMainXyzFile(self, directoryPath):
+        for filename in os.listdir(directoryPath):
+            if filename.endswith(".xyz"):
+                try:
+                    with open(os.path.join(directoryPath, filename)) as f:
+                        line = f.readline()
+                        # Not a nice detection, but if we base the detection of the main file
+                        # on the filename it may be even worse
+                        if line.startswith('UTM'):
+                            return filename
+                except:
+                    raise AerogenError(self.tr("Directory is corrupted. The file '{}' can not be read").format(filename))
+

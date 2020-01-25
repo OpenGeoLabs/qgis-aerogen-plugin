@@ -1,7 +1,7 @@
 import os
 import math
 
-from qgis.core import QgsGeometry, QgsPointXY
+from qgis.core import QgsGeometry, QgsPointXY, QgsCoordinateTransform, QgsCoordinateReferenceSystem, QgsProject
 
 class AerogenReaderError(Exception):
     pass
@@ -36,7 +36,7 @@ class AerogenReader(object):
                         self._crs = line_value(line)
                     if line.endswith('CM'):
                         self._cm = line_value(line, cast_fn=int)
-                    if line.endswith('Lon'):
+                    if line.endswith('Lat'):
                         self._ns = line_value(line, cast_fn=float) > 0
                     if line.endswith('HSL'):
                         self._hsl = line_value(line, cast_fn=int) * (math.pi / 180) # rad
@@ -90,9 +90,17 @@ class AerogenReader(object):
     def _get_id(self, line):
         return line.split()[1]
 
-    def _get_point(self, line):
+    def _get_point_by_distance(self, line, last_point):
+        """Returns point with key as a distance from point defined in last_point parameter."""
         items = line.split()
-        return {items[4]: [items[0], items[1]]}
+        current_point = self._build_point(items[2], items[3])
+        distance = current_point.distance(last_point)
+        return {distance: [items[2], items[3]]}
+
+    def _get_point_by_id(self, line):
+        """Returns point with key as an id from the file."""
+        items = line.split()
+        return {items[4]: [items[2], items[3]]}
 
     def _get_lines(self, type):
         # Open the file with read only permit
@@ -113,7 +121,12 @@ class AerogenReader(object):
                 id = self._get_id(line)
                 points = {}
             if len(line) > 0 and line[0].isdigit():
-                point = self._get_point(line)
+                if len(line_points) > 1:
+                    # We get thrird lan further point from the file
+                    point = self._get_point_by_distance(line, line_points[len(line_points)-1])
+                else:
+                    # We get the first or second point from the file
+                    point = self._get_point_by_id(line)
                 points.update(point)
         for key in sorted(points.keys()):
             line_points.append(self._build_point(points[key][0], points[key][1]))
