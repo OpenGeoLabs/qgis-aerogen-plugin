@@ -28,7 +28,7 @@ from qgis.PyQt.QtCore import pyqtSignal, QSettings
 from qgis.PyQt.QtWidgets import QDockWidget, QFileDialog
 
 from qgis.gui import QgsMessageBar
-from qgis.core import QgsProject, QgsCoordinateReferenceSystem, QgsVectorFileWriter, QgsWkbTypes
+from qgis.core import QgsProject, QgsCoordinateReferenceSystem, QgsVectorFileWriter, QgsWkbTypes, Qgis
 from qgis.utils import iface
 
 from .reader import AerogenReader, AerogenReaderError, AerogenReaderCRS
@@ -111,16 +111,16 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
             self.generateButton.setEnabled(True)
         except AerogenReaderError as e:
             iface.messageBar().pushMessage(
-                "Error",
+                self.tr("Error"),
                 "{}".format(e),
-                level=QgsMessageBar.CRITICAL
+                level=Qgis.Critical
             )
             return
         except AerogenReaderCRS as e:
             iface.messageBar().pushMessage(
-                "Info",
+                self.tr("Info"),
                 self.tr("{}. You need to define CRS manually.").format(e),
-                level=QgsMessageBar.INFO
+                level=Qgis.Info
             )
             return
 
@@ -158,10 +158,17 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                                                                 layerOptions = ["FORCE_GPX_TRACK = YES"],
                                                                 skipAttributeCreation = True
                         )
+
+            iface.messageBar().pushMessage(
+                self.tr("Success"),
+                self.tr("Output layers saved to {}").format(output_dir),
+                level=Qgis.Success
+            )
+
         except (AerogenReaderError, AerogenError) as e:
-            iface.messageBar().pushMessage("Error",
+            iface.messageBar().pushMessage(self.tr("Error"),
                                            "{}".format(e),
-                                           level=QgsMessageBar.CRITICAL
+                                           level=Qgis.Critical
             )
 
     def OnBrowseOutput(self):
