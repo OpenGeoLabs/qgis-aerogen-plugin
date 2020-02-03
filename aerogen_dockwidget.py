@@ -66,7 +66,6 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
         self.outputButton.clicked.connect(self.OnBrowseOutput)
 
         # disable some widgets
-        self.crsButton.setVisible(False)
         self.outputButton.setEnabled(False)
         self.generateButton.setEnabled(False)
         
@@ -123,14 +122,11 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                 self.tr("{}. You need to define CRS manually.").format(e),
                 level=QgsMessageBar.INFO
             )
-            self.crsButton.setVisible(True)
-            self.crsButton.setEnabled(True)
             return
 
         # autodetect CRS by EPSG code
         self._rsCrs = QgsCoordinateReferenceSystem(crs,
                                                    QgsCoordinateReferenceSystem.EpsgCrsId)
-        self.crsLabel.setText(self._rsCrs.description())
 
     def OnGenerate(self):
         if not self._ar:
