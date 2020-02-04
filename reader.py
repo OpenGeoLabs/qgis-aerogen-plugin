@@ -39,11 +39,11 @@ class AerogenReader(object):
                     if line.endswith('Lat'):
                         self._ns = line_value(line, cast_fn=float) > 0
                     if line.endswith('HSL'):
-                        self._hsl = line_value(line, cast_fn=int) * (math.pi / 180) # rad
+                        self._hsl = line_value(line, cast_fn=float) * (math.pi / 180) # rad
                     if line.endswith('spacing SL'):
                         self._ssl = line_value(line, cast_fn=float)
                     if line.endswith('HTL'):
-                        self._htl = line_value(line, cast_fn=int) * (math.pi / 180) # rad
+                        self._htl = line_value(line, cast_fn=float) * (math.pi / 180) # rad
                     if line.endswith('spacing TL'):
                         self._stl = line_value(line, cast_fn=float)
 

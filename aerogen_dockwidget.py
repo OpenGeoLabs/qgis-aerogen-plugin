@@ -22,6 +22,7 @@
 """
 
 import os
+import shutil
 
 from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtCore import pyqtSignal, QSettings
@@ -147,7 +148,12 @@ class AeroGenDockWidget(QDockWidget, FORM_CLASS):
                     layer = AerogenLayer(output_file, fn(), self._rsCrs)
                 else:
                     layer = AerogenLayer(output_file, fn(), self._destCrs)
-                layer.loadNamedStyle(self.stylePath(name))
+                style_input_file = self.stylePath(name)
+                # apply style for layer
+                layer.loadNamedStyle(style_input_file)
+                # also copy the style into output directory with name of the output layer
+                style_output_file = os.path.join(output_dir, self._ar.basename() + '_{}.qml'.format(name))
+                shutil.copyfile(style_input_file, style_output_file)
                 # add map layer to the canvas
                 QgsProject.instance().addMapLayer(layer)
                 if self.checkBoxGpx.isChecked():
