@@ -161,6 +161,9 @@ class AerogenReader(object):
                 distance_current = line_points[i].distance(line_points[i+1])
                 distance_next = line_points[i+2].distance(line_points[i+3])
                 line_g = QgsGeometry.fromPolylineXY([line_points[i + 1], line_points[i + 2]])
+                # hack - there is a problem of intersection on Windows - two lines that does not intersect
+                # have intersection result close to 0 0, but in digits of e-300
+                intersection_error_limit = 0.000000000001
                 if distance_current > distance_next:
                     # we go from longer to shorter line
                     line = QgsLineString(QgsPoint(line_points[i+2]), QgsPoint(line_points[i+3]))
@@ -173,7 +176,9 @@ class AerogenReader(object):
                     intersection = line_g.intersection(line).centroid()
                     if not intersection.isNull():
                         intersection = intersection.asPoint()
-                        line_points[i + 2] = intersection
+                        # hack
+                        if intersection.x() > intersection_error_limit and intersection.y() > intersection_error_limit:
+                            line_points[i + 2] = intersection
                 else:
                     # we go from shorter to longer line
                     line = QgsLineString(QgsPoint(line_points[i]), QgsPoint(line_points[i+1]))
@@ -183,7 +188,9 @@ class AerogenReader(object):
                     intersection = line_g.intersection(line).centroid()
                     if not intersection.isNull():
                         intersection = intersection.asPoint()
-                        line_points[i + 1] = intersection
+                        # hack
+                        if intersection.x() > intersection_error_limit and intersection.y() > intersection_error_limit:
+                            line_points[i + 1] = intersection
             i+=2
             previous_diff = diff
 
